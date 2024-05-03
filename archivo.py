@@ -1,7 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QInputDialog, QLabel, QLineEdit
 from pytube import YouTube
-import os
 
 
 # Función para descargar el video
@@ -17,31 +16,48 @@ def get_video_info(url):
 
 # Función para listar las corrientes disponibles
 def list_streams(url):
-    yt = YouTube(url)
-    streams_info = "\n".join([str(stream) for stream in yt.streams.all()])
-    return f"Corrientes disponibles:\n{streams_info}"
+    try:
+        yt = YouTube(url)
+        
+        # Construir el string con cada corriente en una nueva línea
+        stream_info = "\n".join([str(stream) for stream in yt.streams])
+        
+        return f"Corrientes disponibles:\n{stream_info}"
+    except Exception as e:
+        return f"Ocurrió un error al obtener las corrientes disponibles: {str(e)}"
+
 
 # Función para descargar una corriente específica por su itag
 def download_specific_stream(url, itag):
-    yt = YouTube(url)
-    stream = yt.streams.get_by_itag(itag)
-    stream.download()
-    return "Corriente descargada exitosamente!"
+    try:
+        yt = YouTube(url)
+        stream = yt.streams.get_by_itag(itag)
+        
+        # Construir el nombre del archivo
+        filename = f"video_{itag}.{stream.subtype}"
+        # Descargar la corriente con el nombre de archivo personalizado
+        stream.download(filename=filename)
+        
+        return "Corriente descargada exitosamente!"
+    except Exception as e:
+        return f"Ocurrió un error al descargar la corriente: {str(e)}"
+
+
 
 # Función para descargar solo el audio
 def download_audio(url):
-    yt = YouTube(url)
-    audio_stream = yt.streams.filter(only_audio=True).first()
-    if audio_stream:
-        audio_filename = "audio.mp4"
-        audio_stream.download(filename=audio_filename)
+    try:
+        yt = YouTube(url)
+        audio_stream = yt.streams.filter(only_audio=True).first()
         
-        # Renombrar el archivo de audio a .mp3
-        os.rename(audio_filename, "audio.mp3")
-        
-        return "Audio descargado exitosamente en formato MP3!"
-    else:
-        return "No se encontró ninguna corriente de audio disponible para este video."
+        if audio_stream:
+            audio_filename = "audio.mp4"
+            audio_stream.download(filename=audio_filename)
+            return "Audio descargado exitosamente en formato MP4!"
+        else:
+            return "No se encontró ninguna corriente de audio disponible para este video."
+    except Exception as e:
+        return f"Ocurrió un error al descargar el audio: {str(e)}"
 
 class MainWindow(QMainWindow):
     def __init__(self):
